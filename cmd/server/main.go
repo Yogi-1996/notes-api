@@ -23,8 +23,11 @@ func main() {
 		})
 	})
 
-	server.POST("/addnote", notehandler.NoteAdd)
-	server.GET("/notes", notehandler.GetNotes)
+	server.POST("/notes", notehandler.NoteAdd)
+	server.GET("/notes", notehandler.GetNote)
+	server.GET("/notes/:id", notehandler.GetNotesByID)
+	server.PUT("/notes/:id", notehandler.ModNote)
+	server.DELETE("/notes/:id", notehandler.DelNote)
 
 	server.Run(":8080")
 

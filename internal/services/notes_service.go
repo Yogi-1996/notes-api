@@ -9,57 +9,66 @@ import (
 
 type NoteServiceInterface interface {
 	AddNote(title, content string) (models.Note, error)
-	GetNote(title string) (models.Note, error)
-	GetAllNote() ([]models.Note, error)
+	ModNote(id int, note models.Note) (models.Note, error)
+	DelNote(id int) error
+	GetNote(id int) (models.Note, error)
+	GetAll() ([]models.Note, error)
 }
 
 type NoteService struct {
-	repo *repository.NoteRepositry
+	repo repository.NoteRepositryInterface
 }
 
-func NewNoteService(n *repository.NoteRepositry) *NoteService {
+func NewNoteService(n repository.NoteRepositryInterface) *NoteService {
 	return &NoteService{
 		repo: n,
 	}
 }
 
 func (n *NoteService) AddNote(title, content string) (models.Note, error) {
-	_, check := n.repo.GetNote(title)
-
+	note, check := n.repo.AddNote(title, content)
 	if !check {
-
-		var newnote models.Note
-
-		newnote = n.repo.Add(title, content)
-		return newnote, nil
-
+		return models.Note{}, fmt.Errorf("Duplicate Note Title")
 	}
 
-	return models.Note{}, fmt.Errorf("Duplicate title")
+	return note, nil
+}
+
+func (n *NoteService) ModNote(id int, note models.Note) (models.Note, error) {
+	note, check := n.repo.ModNote(id, note)
+	if !check {
+		return models.Note{}, fmt.Errorf("Id Not Found")
+	}
+
+	return note, nil
+}
+
+func (n *NoteService) DelNote(id int) error {
+	check := n.repo.DelNote(id)
+	if !check {
+		return fmt.Errorf("Id Not Found")
+	}
+
+	return nil
 
 }
 
-func (n *NoteService) GetNote(title string) (models.Note, error) {
-	note, check := n.repo.GetNote(title)
-
+func (n *NoteService) GetNote(id int) (models.Note, error) {
+	note, check := n.repo.GetNote(id)
 	if !check {
-
-		return models.Note{}, fmt.Errorf("Duplicate title")
-
+		return models.Note{}, fmt.Errorf("Id Not Found")
 	}
 
 	return note, nil
 
 }
 
-func (n *NoteService) GetAllNote() ([]models.Note, error) {
-	notes, check := n.repo.GetAll()
-
+func (n *NoteService) GetAll() ([]models.Note, error) {
+	note, check := n.repo.GetAll()
 	if !check {
-
-		return []models.Note{}, fmt.Errorf("No Note Found")
-
+		return []models.Note{}, fmt.Errorf("Notes Empty")
 	}
 
-	return notes, nil
+	return note, nil
+
 }
