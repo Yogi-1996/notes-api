@@ -27,7 +27,7 @@ func NewUserService(u repository.UserRepositoryInterface) *UserService {
 func (u *UserService) AddUser(email, password string) (models.User, error) {
 	hashpassword, err := hash.GenerateHash(password)
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, fmt.Errorf("password cannot be hashed: %w", err)
 	}
 
 	newuser, check := u.repo.AddUser(email, hashpassword)

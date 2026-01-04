@@ -23,28 +23,36 @@ func main() {
 	userservice := services.NewUserService(usersdb)
 	userhandler := handlers.NewUserHandler(userservice)
 
-	ginHandler := gin.Default()
+	router := gin.Default()
 
-	ginHandler.GET("/", func(ctx *gin.Context) {
+	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
-			"messsage": "Note Server Running",
+			"message": "Note Server Running",
 		})
 	})
 
-	ginHandler.POST("/notes", notehandler.NoteAdd)
-	ginHandler.GET("/notes", notehandler.GetNote)
-	ginHandler.GET("/notes/:id", notehandler.GetNotesByID)
-	ginHandler.PUT("/notes/:id", notehandler.ModNote)
-	ginHandler.DELETE("/notes/:id", notehandler.DelNote)
+	api := router.Group("api/v1")
 
-	ginHandler.POST("/register", userhandler.UserRegister)
-	ginHandler.POST("/login", userhandler.UserLogin)
+	notes := api.Group("/notes")
+	{
+		notes.POST("/", notehandler.NoteAdd)
+		notes.GET("/", notehandler.GetNote)
+		notes.GET("/:id", notehandler.GetNotesByID)
+		notes.PUT("/:id", notehandler.ModNote)
+		notes.DELETE("/:id", notehandler.DelNote)
+	}
+
+	auth := api.Group("/auth")
+	{
+		auth.POST("/register", userhandler.UserRegister)
+		auth.POST("/login", userhandler.UserLogin)
+	}
 
 	ctx := context.Background()
 
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: ginHandler,
+		Handler: router,
 	}
 
 	if err := servers.RunServer(server, ctx, 10*time.Second); err != nil {
