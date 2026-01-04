@@ -19,6 +19,10 @@ func main() {
 	noteservice := services.NewNoteService(notesdb)
 	notehandler := handlers.NewNoteHandler(noteservice)
 
+	usersdb := repository.NewUserRepository()
+	userservice := services.NewUserService(usersdb)
+	userhandler := handlers.NewUserHandler(userservice)
+
 	ginHandler := gin.Default()
 
 	ginHandler.GET("/", func(ctx *gin.Context) {
@@ -32,6 +36,9 @@ func main() {
 	ginHandler.GET("/notes/:id", notehandler.GetNotesByID)
 	ginHandler.PUT("/notes/:id", notehandler.ModNote)
 	ginHandler.DELETE("/notes/:id", notehandler.DelNote)
+
+	ginHandler.POST("/register", userhandler.UserRegister)
+	ginHandler.POST("/login", userhandler.UserLogin)
 
 	ctx := context.Background()
 
