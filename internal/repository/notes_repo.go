@@ -23,7 +23,8 @@ type NoteRepositry struct {
 
 func NewNoteRepositry() *NoteRepositry {
 	return &NoteRepositry{
-		notes: make(map[int]models.Note),
+		notes:  make(map[int]models.Note),
+		nextID: 1,
 	}
 }
 
