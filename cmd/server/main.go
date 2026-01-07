@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Yogi-1996/notes-backend/internal/handlers"
+	"github.com/Yogi-1996/notes-backend/internal/middelware"
 	"github.com/Yogi-1996/notes-backend/internal/repository"
 	"github.com/Yogi-1996/notes-backend/internal/servers"
 	"github.com/Yogi-1996/notes-backend/internal/services"
@@ -31,9 +32,9 @@ func main() {
 		})
 	})
 
-	api := router.Group("api/v1")
+	api := router.Group("api")
 
-	notes := api.Group("/notes")
+	notes := api.Group("/notes", middelware.AunthMiddelware)
 	{
 		notes.POST("/", notehandler.NoteAdd)
 		notes.GET("/", notehandler.GetNote)
