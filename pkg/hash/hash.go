@@ -11,7 +11,7 @@ func GenerateHash(password string) (string, error) {
 		return "", errors.New("password cannot be empty")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return "", err
 	}

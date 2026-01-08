@@ -8,11 +8,11 @@ import (
 )
 
 type NoteRepositryInterface interface {
-	AddNote(title, content string) (models.Note, bool)
-	ModNote(id int, note models.Note) (models.Note, bool)
-	DelNote(id int) bool
-	GetNote(id int) (models.Note, bool)
-	GetAll() ([]models.Note, bool)
+	AddNote(user_id int, title, content string) (models.Note, bool)
+	ModNote(user_id, id int, note models.Note) (models.Note, bool)
+	DelNote(user_id, id int) bool
+	GetNote(user_id, id int) (models.Note, bool)
+	GetAll(user_id int) ([]models.Note, bool)
 }
 
 type NoteRepositry struct {
@@ -28,7 +28,7 @@ func NewNoteRepositry() *NoteRepositry {
 	}
 }
 
-func (n *NoteRepositry) AddNote(title, content string) (models.Note, bool) {
+func (n *NoteRepositry) AddNote(user_id int, title, content string) (models.Note, bool) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
@@ -40,6 +40,7 @@ func (n *NoteRepositry) AddNote(title, content string) (models.Note, bool) {
 
 	newnote := models.Note{
 		ID:        n.nextID,
+		UserID:    user_id,
 		Title:     title,
 		Content:   content,
 		CreatedAt: time.Now(),
@@ -52,25 +53,31 @@ func (n *NoteRepositry) AddNote(title, content string) (models.Note, bool) {
 	return newnote, true
 }
 
-func (n *NoteRepositry) ModNote(id int, note models.Note) (models.Note, bool) {
+func (n *NoteRepositry) ModNote(user_id, id int, note models.Note) (models.Note, bool) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if _, ok := n.notes[id]; !ok {
+	existing, ok := n.notes[id]
+	if !ok {
 		return models.Note{}, false
 	}
 
-	note.ID = id
-	n.notes[id] = note
+	existing.Content = note.Content
+	existing.Title = note.Title
+	existing.UpdatedAt = time.Now()
 
-	return note, true
+	n.notes[id] = existing
+
+	return existing, true
 }
 
-func (n *NoteRepositry) DelNote(id int) bool {
+func (n *NoteRepositry) DelNote(user_id, id int) bool {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if _, ok := n.notes[id]; !ok {
+	if note, ok := n.notes[id]; !ok {
+		return false
+	} else if note.UserID != user_id {
 		return false
 	}
 
@@ -78,12 +85,12 @@ func (n *NoteRepositry) DelNote(id int) bool {
 	return true
 }
 
-func (n *NoteRepositry) GetNote(id int) (models.Note, bool) {
+func (n *NoteRepositry) GetNote(user_id, id int) (models.Note, bool) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
 	for _, note := range n.notes {
-		if note.ID == id {
+		if note.ID == id && note.UserID == user_id {
 			return note, true
 		}
 	}
@@ -91,17 +98,21 @@ func (n *NoteRepositry) GetNote(id int) (models.Note, bool) {
 	return models.Note{}, false
 }
 
-func (n *NoteRepositry) GetAll() ([]models.Note, bool) {
+func (n *NoteRepositry) GetAll(user_id int) ([]models.Note, bool) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if len(n.notes) == 0 {
+	notes := make([]models.Note, 0, len(n.notes))
+	for _, note := range n.notes {
+		if note.UserID == user_id {
+			notes = append(notes, note)
+		}
+
+	}
+
+	if len(notes) == 0 {
 		return []models.Note{}, false
 	}
 
-	notes := make([]models.Note, 0, len(n.notes))
-	for _, note := range n.notes {
-		notes = append(notes, note)
-	}
 	return notes, true
 }

@@ -51,7 +51,7 @@ func (u *UserService) VerifyUser(email, password string) (string, error) {
 		return "", fmt.Errorf("Password Doesnt match")
 	}
 
-	token, err := jwt.GenerateToken(email)
+	token, err := jwt.GenerateToken(user.ID)
 
 	if err != nil {
 		return "", err

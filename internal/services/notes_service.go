@@ -8,11 +8,11 @@ import (
 )
 
 type NoteServiceInterface interface {
-	AddNote(title, content string) (models.Note, error)
-	ModNote(id int, note models.Note) (models.Note, error)
-	DelNote(id int) error
-	GetNote(id int) (models.Note, error)
-	GetAll() ([]models.Note, error)
+	AddNote(user_id int, title, content string) (models.Note, error)
+	ModNote(user_id, id int, note models.Note) (models.Note, error)
+	DelNote(user_id, id int) error
+	GetNote(user_id, id int) (models.Note, error)
+	GetAll(user_id int) ([]models.Note, error)
 }
 
 type NoteService struct {
@@ -25,8 +25,8 @@ func NewNoteService(n repository.NoteRepositryInterface) *NoteService {
 	}
 }
 
-func (n *NoteService) AddNote(title, content string) (models.Note, error) {
-	note, check := n.repo.AddNote(title, content)
+func (n *NoteService) AddNote(user_id int, title, content string) (models.Note, error) {
+	note, check := n.repo.AddNote(user_id, title, content)
 	if !check {
 		return models.Note{}, fmt.Errorf("Duplicate Note Title")
 	}
@@ -34,8 +34,8 @@ func (n *NoteService) AddNote(title, content string) (models.Note, error) {
 	return note, nil
 }
 
-func (n *NoteService) ModNote(id int, note models.Note) (models.Note, error) {
-	note, check := n.repo.ModNote(id, note)
+func (n *NoteService) ModNote(user_id, id int, note models.Note) (models.Note, error) {
+	note, check := n.repo.ModNote(user_id, id, note)
 	if !check {
 		return models.Note{}, fmt.Errorf("Id Not Found")
 	}
@@ -43,8 +43,8 @@ func (n *NoteService) ModNote(id int, note models.Note) (models.Note, error) {
 	return note, nil
 }
 
-func (n *NoteService) DelNote(id int) error {
-	check := n.repo.DelNote(id)
+func (n *NoteService) DelNote(user_id, id int) error {
+	check := n.repo.DelNote(user_id, id)
 	if !check {
 		return fmt.Errorf("Id Not Found")
 	}
@@ -53,8 +53,8 @@ func (n *NoteService) DelNote(id int) error {
 
 }
 
-func (n *NoteService) GetNote(id int) (models.Note, error) {
-	note, check := n.repo.GetNote(id)
+func (n *NoteService) GetNote(user_id, id int) (models.Note, error) {
+	note, check := n.repo.GetNote(user_id, id)
 	if !check {
 		return models.Note{}, fmt.Errorf("Id Not Found")
 	}
@@ -63,8 +63,8 @@ func (n *NoteService) GetNote(id int) (models.Note, error) {
 
 }
 
-func (n *NoteService) GetAll() ([]models.Note, error) {
-	note, check := n.repo.GetAll()
+func (n *NoteService) GetAll(user_id int) ([]models.Note, error) {
+	note, check := n.repo.GetAll(user_id)
 	if !check {
 		return []models.Note{}, fmt.Errorf("Notes Empty")
 	}

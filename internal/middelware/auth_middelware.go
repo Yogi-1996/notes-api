@@ -12,14 +12,22 @@ func AunthMiddelware(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"message": "Authorization is missing/empty",
+			"message": "Authorization header is missing/empty",
 		})
 		return
 	}
 
-	tokenString := strings.Trim(authHeader, `"`)
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": "Authorization header format must be Bearer",
+		})
+		return
+	}
 
-	token, err := jwt.VerifyToken(tokenString)
+	tokenString := parts[1]
+
+	token, claims, err := jwt.VerifyToken(tokenString)
 
 	if err != nil || !token.Valid {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -27,6 +35,8 @@ func AunthMiddelware(c *gin.Context) {
 		})
 		return
 	}
+
+	c.Set("UserID", claims.UserID)
 
 	c.Next()
 
