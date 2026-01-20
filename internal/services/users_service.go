@@ -25,23 +25,33 @@ func NewUserService(u repository.UserRepositoryInterface) *UserService {
 }
 
 func (u *UserService) AddUser(email, password string) (models.User, error) {
+	_, err := u.repo.GetUserByEmail(email)
+
+	if err == nil {
+		return models.User{}, fmt.Errorf("Emailid already registered: %w", err)
+	}
+
 	hashpassword, err := hash.GenerateHash(password)
 	if err != nil {
 		return models.User{}, fmt.Errorf("password cannot be hashed: %w", err)
 	}
 
-	newuser, check := u.repo.AddUser(email, hashpassword)
-	if !check {
-		return models.User{}, fmt.Errorf("User Already exist")
+	user := models.User{
+		Email:    email,
+		Password: hashpassword,
+	}
+	err = u.repo.AddUser(&user)
+	if err != nil {
+		return models.User{}, err
 	}
 
-	return newuser, nil
+	return user, nil
 }
 
 func (u *UserService) VerifyUser(email, password string) (string, error) {
-	user, check := u.repo.GetUser(email)
-	if !check {
-		return "", fmt.Errorf("user does not exist")
+	user, err := u.repo.GetUserByEmail(email)
+	if err != nil {
+		return "", err
 	}
 
 	hashpassword := user.Password

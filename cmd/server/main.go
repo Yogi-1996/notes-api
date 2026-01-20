@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Yogi-1996/notes-backend/internal/config"
+	"github.com/Yogi-1996/notes-backend/internal/database"
 	"github.com/Yogi-1996/notes-backend/internal/handlers"
 	"github.com/Yogi-1996/notes-backend/internal/middelware"
 	"github.com/Yogi-1996/notes-backend/internal/repository"
@@ -15,12 +17,18 @@ import (
 )
 
 func main() {
+	config := config.Load()
+	db, err := database.NewPostgres(config)
 
-	notesdb := repository.NewNoteRepositry()
+	if err != nil {
+		log.Fatal("error opening Database %w", err)
+	}
+
+	notesdb := repository.NewNoteRepositry(db)
 	noteservice := services.NewNoteService(notesdb)
 	notehandler := handlers.NewNoteHandler(noteservice)
 
-	usersdb := repository.NewUserRepository()
+	usersdb := repository.NewUserRepository(db)
 	userservice := services.NewUserService(usersdb)
 	userhandler := handlers.NewUserHandler(userservice)
 
@@ -34,13 +42,13 @@ func main() {
 
 	api := router.Group("api")
 
-	notes := api.Group("/notes", middelware.AunthMiddelware)
+	notes := api.Group("/", middelware.AunthMiddelware)
 	{
-		notes.POST("/", notehandler.NoteAdd)
-		notes.GET("/", notehandler.GetNote)
-		notes.GET("/:id", notehandler.GetNotesByID)
-		notes.PUT("/:id", notehandler.ModNote)
-		notes.DELETE("/:id", notehandler.DelNote)
+		notes.POST("notes", notehandler.NoteAdd)
+		notes.GET("notes", notehandler.GetNote)
+		notes.GET("notes/:id", notehandler.GetNotesByID)
+		notes.PUT("notes/:id", notehandler.ModNote)
+		notes.DELETE("notes/:id", notehandler.DelNote)
 	}
 
 	auth := api.Group("/auth")

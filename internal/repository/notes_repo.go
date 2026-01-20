@@ -1,118 +1,70 @@
 package repository
 
 import (
-	"sync"
-	"time"
-
 	"github.com/Yogi-1996/notes-backend/internal/models"
+	"gorm.io/gorm"
 )
 
 type NoteRepositryInterface interface {
-	AddNote(user_id int, title, content string) (models.Note, bool)
-	ModNote(user_id, id int, note models.Note) (models.Note, bool)
-	DelNote(user_id, id int) bool
-	GetNote(user_id, id int) (models.Note, bool)
-	GetAll(user_id int) ([]models.Note, bool)
+	AddNote(note *models.Note) error
+	ModNote(note_id, user_id int, note *models.Note) error
+	DelNote(note_id, user_id int) error
+	GetNote(note_id, user_id int) (models.Note, error)
+	GetAllNote(user_id int) ([]models.Note, error)
 }
 
 type NoteRepositry struct {
-	mu     sync.Mutex
-	notes  map[int]models.Note
-	nextID int
+	DB *gorm.DB
 }
 
-func NewNoteRepositry() *NoteRepositry {
+func NewNoteRepositry(db *gorm.DB) *NoteRepositry {
 	return &NoteRepositry{
-		notes:  make(map[int]models.Note),
-		nextID: 1,
+		DB: db,
 	}
 }
 
-func (n *NoteRepositry) AddNote(user_id int, title, content string) (models.Note, bool) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	for _, note := range n.notes {
-		if note.Title == title {
-			return models.Note{}, false
-		}
-	}
-
-	newnote := models.Note{
-		ID:        n.nextID,
-		UserID:    user_id,
-		Title:     title,
-		Content:   content,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	n.notes[n.nextID] = newnote
-	n.nextID += 1
-
-	return newnote, true
+func (n *NoteRepositry) AddNote(note *models.Note) error {
+	return n.DB.Create(note).Error
 }
 
-func (n *NoteRepositry) ModNote(user_id, id int, note models.Note) (models.Note, bool) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
+func (n *NoteRepositry) ModNote(note_id, user_id int, note *models.Note) error {
+	var modnote models.Note
 
-	existing, ok := n.notes[id]
-	if !ok {
-		return models.Note{}, false
+	if err := n.DB.Where("user_id = ? AND id = ?", user_id, note_id).First(&modnote).Error; err != nil {
+		return err
 	}
 
-	existing.Content = note.Content
-	existing.Title = note.Title
-	existing.UpdatedAt = time.Now()
+	n.DB.Model(&modnote).Updates(map[string]interface{}{
+		"title":   note.Title,
+		"content": note.Content,
+	})
 
-	n.notes[id] = existing
-
-	return existing, true
+	return nil
 }
 
-func (n *NoteRepositry) DelNote(user_id, id int) bool {
-	n.mu.Lock()
-	defer n.mu.Unlock()
+func (n *NoteRepositry) DelNote(note_id, user_id int) error {
+	var note models.Note
 
-	if note, ok := n.notes[id]; !ok {
-		return false
-	} else if note.UserID != user_id {
-		return false
+	err := n.DB.Where("user_id = ? AND id = ?", user_id, note_id).First(&note).Error
+	if err != nil {
+		return err
 	}
 
-	delete(n.notes, id)
-	return true
+	return n.DB.Delete(&note).Error
 }
 
-func (n *NoteRepositry) GetNote(user_id, id int) (models.Note, bool) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
+func (n *NoteRepositry) GetNote(note_id, user_id int) (models.Note, error) {
+	var note models.Note
 
-	for _, note := range n.notes {
-		if note.ID == id && note.UserID == user_id {
-			return note, true
-		}
-	}
+	err := n.DB.Where("user_id = ? AND id = ?", user_id, note_id).First(&note).Error
 
-	return models.Note{}, false
+	return note, err
 }
 
-func (n *NoteRepositry) GetAll(user_id int) ([]models.Note, bool) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
+func (n *NoteRepositry) GetAllNote(user_id int) ([]models.Note, error) {
+	var notes []models.Note
 
-	notes := make([]models.Note, 0, len(n.notes))
-	for _, note := range n.notes {
-		if note.UserID == user_id {
-			notes = append(notes, note)
-		}
+	err := n.DB.Where("user_id = ?", user_id).Find(&notes).Error
 
-	}
-
-	if len(notes) == 0 {
-		return []models.Note{}, false
-	}
-
-	return notes, true
+	return notes, err
 }
