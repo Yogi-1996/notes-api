@@ -20,6 +20,8 @@ func Load() *Config {
 		log.Println("No .env file found, reading environment variables directly")
 	}
 
+	//fjhfnhfjhfjhgf
+
 	cfg := &Config{
 		DBHost: os.Getenv("DB_HOST"),
 		DBPort: os.Getenv("DB_PORT"),
