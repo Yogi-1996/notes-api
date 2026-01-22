@@ -19,7 +19,7 @@ func Load() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, reading environment variables directly")
 	}
-
+	// Please add sample env file 
 	cfg := &Config{
 		DBHost: os.Getenv("DB_HOST"),
 		DBPort: os.Getenv("DB_PORT"),
