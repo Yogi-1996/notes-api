@@ -2,36 +2,52 @@ package config
 
 import (
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
-	DBHost string
-	DBPort string
-	DBUser string
-	DBPass string
-	DBName string
+	App struct {
+		Name string
+		Port string
+		Env  string
+	}
+	DB struct {
+		Host     string
+		Port     string
+		User     string
+		Password string
+		Name     string
+		SSLMode  string
+	}
+	JWT struct {
+		Secret      string
+		ExpireHours int
+	}
 }
 
 func Load() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, reading environment variables directly")
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./config")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	cfg := &Config{
-		DBHost: os.Getenv("DB_HOST"),
-		DBPort: os.Getenv("DB_PORT"),
-		DBUser: os.Getenv("DB_USER"),
-		DBPass: os.Getenv("DB_PASS"),
-		DBName: os.Getenv("DB_NAME"),
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		log.Fatalf("Unable to decode config: %v", err)
 	}
 
-	// sanity check
-	if cfg.DBHost == "" || cfg.DBPort == "" || cfg.DBUser == "" || cfg.DBPass == "" || cfg.DBName == "" {
-		log.Fatal("Some DB environment variables are missing")
+	if cfg.DB.Host == "" || cfg.DB.User == "" {
+		log.Fatal("Database configuration missing")
 	}
 
-	return cfg
+	if cfg.App.Port == "" {
+		cfg.App.Port = "8080"
+	}
+
+	return &cfg
 }

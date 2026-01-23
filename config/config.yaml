@@ -1,0 +1,16 @@
+app:
+  name: notes-api
+  port: "8080"
+  env: development
+
+db:
+  host: localhost
+  port: "5432"
+  user: yogi
+  password: 1230
+  name: yogidb
+  sslmode: disable
+
+jwt:
+  secret: notesecretkey
+  expire_hours: 24

@@ -60,7 +60,7 @@ func main() {
 	ctx := context.Background()
 
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    config.App.Port,
 		Handler: router,
 	}
 
